@@ -19,6 +19,4 @@ g++ linux/src/main.cpp linux/src/lib/dosapi.cpp -o test/sydosnet.exe -pthread &&
 ```
 
 <image src="image/sydosnet.png" width = "500px"><br><br>
-
-## API
-DosApi https://github.com/seungyup26/dosapi
+  
