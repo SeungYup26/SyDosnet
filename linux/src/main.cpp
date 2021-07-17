@@ -136,10 +136,6 @@ int main(int argc, char** argv)
         }
 
         /* Set Attack Delay */
-
-    if(attack_delay == 0) {
-        std::cout << " W: attack delay is 0 " << std::endl;
-    }
         else if(strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--delay") == 0)
         {
             attack_delay = atoi(argv[i+1]);
