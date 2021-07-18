@@ -1,7 +1,7 @@
 # SyDosnet
 ![email](https://img.shields.io/badge/about-seungyup26%40gmail.com-blue)
 [![discord](https://img.shields.io/badge/discord-click-blue)](https://discord.gg/vgcteh8JAc)
-![os](https://img.shields.io/badge/os-linux-blue)
+![os](https://img.shields.io/badge/os-linux/windows-blue)
 ![lang](https://img.shields.io/badge/lang-cpp-blue)
 
 ## Usage
